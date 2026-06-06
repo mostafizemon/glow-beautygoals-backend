@@ -35,6 +35,7 @@ func main() {
 	productRepo := repository.NewProductRepository(db)
 	configRepo := repository.NewConfigRepository(db)
 	orderRepo := repository.NewOrderRepository(db)
+	categoryRepo := repository.NewCategoryRepository(db)
 
 	// Initialize Services
 	productService := service.NewProductService(productRepo)
@@ -43,6 +44,7 @@ func main() {
 	trackingService := service.NewTrackingService(configRepo)
 	userService := service.NewUserService(db)
 	orderService := service.NewOrderService(orderRepo)
+	categoryService := service.NewCategoryService(categoryRepo)
 
 	// Create initial admin if doesn't exist
 	if err := authService.CreateInitialAdmin(context.Background(), "mostafizemon09@gmail.com", "Emon@548"); err != nil {
@@ -56,6 +58,7 @@ func main() {
 	trackingHandler := handler.NewTrackingHandler(trackingService)
 	userHandler := handler.NewUserHandler(userService)
 	orderHandler := handler.NewOrderHandler(orderService)
+	categoryHandler := handler.NewCategoryHandler(categoryService)
 
 	r := gin.Default()
 	
@@ -73,6 +76,7 @@ func main() {
 		v1.GET("/config/pixels", configHandler.GetPublicPixels)
 		v1.POST("/events/track", trackingHandler.TrackEvent)
 		v1.POST("/orders", orderHandler.CreateOrder) // Publicly accessible to place orders
+		v1.GET("/categories", categoryHandler.GetAllCategories) // Public - for product forms
 
 		// Protected Admin routes (we will add JWT middleware later)
 		admin := v1.Group("/admin")
@@ -89,7 +93,11 @@ func main() {
 				superAdmin.PUT("/products/:id", productHandler.UpdateProduct)
 				superAdmin.DELETE("/products/:id", productHandler.DeleteProduct)
 				superAdmin.POST("/products/upload", productHandler.UploadImage)
-				
+
+				superAdmin.POST("/categories", categoryHandler.CreateCategory)
+				superAdmin.PUT("/categories/:id", categoryHandler.UpdateCategory)
+				superAdmin.DELETE("/categories/:id", categoryHandler.DeleteCategory)
+
 				superAdmin.GET("/config/tracking", configHandler.GetTrackingConfig)
 				superAdmin.POST("/config/tracking", configHandler.UpdateTrackingConfig)
 
