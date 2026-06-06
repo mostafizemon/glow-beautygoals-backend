@@ -6,6 +6,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type Category struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Name      string             `bson:"name" json:"name"`
+	Slug      string             `bson:"slug" json:"slug"`
+	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
 type User struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Email        string             `bson:"email" json:"email"`
@@ -22,17 +30,21 @@ type SEO struct {
 }
 
 type Product struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	Slug        string             `bson:"slug" json:"slug"`
-	Name        string             `bson:"name" json:"name"`
-	Description string             `bson:"description" json:"description"`
-	Price       float64            `bson:"price" json:"price"`
-	Stock       int                `bson:"stock" json:"stock"`
-	Images      []string           `bson:"images" json:"images"`
-	SEO         SEO                `bson:"seo" json:"seo"`
-	IsActive    bool               `bson:"is_active" json:"is_active"`
-	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
+	ID             primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	Slug           string             `bson:"slug" json:"slug"`
+	Name           string             `bson:"name" json:"name"`
+	Description    string             `bson:"description" json:"description"`
+	Category       string             `bson:"category" json:"category"`
+	Price          float64            `bson:"price" json:"price"`
+	OfferPrice     float64            `bson:"offer_price" json:"offer_price"`
+	Stock          int                `bson:"stock" json:"stock"`
+	Images         []string           `bson:"images" json:"images"`
+	SEO            SEO                `bson:"seo" json:"seo"`
+	IsFeatured     bool               `bson:"is_featured" json:"is_featured"`
+	IsActive       bool               `bson:"is_active" json:"is_active"`
+	IsFreeDelivery bool               `bson:"is_free_delivery" json:"is_free_delivery"`
+	CreatedAt      time.Time          `bson:"created_at" json:"created_at"`
+	UpdatedAt      time.Time          `bson:"updated_at" json:"updated_at"`
 }
 
 type Customer struct {

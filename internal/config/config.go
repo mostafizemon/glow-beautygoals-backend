@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	Port      string
-	MongoURI  string
-	DBName    string
-	JWTSecret string
+	Port         string
+	MongoURI     string
+	DBName       string
+	JWTSecret    string
+	CloudinaryURL string
 }
 
 func LoadConfig() *Config {
@@ -42,11 +43,14 @@ func LoadConfig() *Config {
 		jwtSecret = "super_secret_key_for_admin"
 	}
 
+	cloudinaryURL := os.Getenv("CLOUDINARY_URL")
+
 	return &Config{
-		Port:      port,
-		MongoURI:  mongoURI,
-		DBName:    dbName,
-		JWTSecret: jwtSecret,
+		Port:          port,
+		MongoURI:      mongoURI,
+		DBName:        dbName,
+		JWTSecret:     jwtSecret,
+		CloudinaryURL: cloudinaryURL,
 	}
 }
 

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: glow-beauty-api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+      - JWT_SECRET=super_secret_key_for_admin
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
