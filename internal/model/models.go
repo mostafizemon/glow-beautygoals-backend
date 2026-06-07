@@ -63,10 +63,12 @@ type OrderItem struct {
 }
 
 type TrackingEvents struct {
-	Fbp     string `bson:"fbp" json:"fbp"`
-	Fbc     string `bson:"fbc" json:"fbc"`
-	Ttp     string `bson:"ttp" json:"ttp"`
-	EventID string `bson:"event_id" json:"event_id"`
+	Fbp      string `bson:"fbp" json:"fbp"`
+	Fbc      string `bson:"fbc" json:"fbc"`
+	Ttp      string `bson:"ttp" json:"ttp"`
+	Ttclid   string `bson:"ttclid" json:"ttclid"`
+	EventID  string `bson:"event_id" json:"event_id"`
+	EventURL string `bson:"event_url" json:"event_url"`
 }
 
 type Order struct {

@@ -57,7 +57,7 @@ func main() {
 	configHandler := handler.NewConfigHandler(configService)
 	trackingHandler := handler.NewTrackingHandler(trackingService)
 	userHandler := handler.NewUserHandler(userService)
-	orderHandler := handler.NewOrderHandler(orderService)
+	orderHandler := handler.NewOrderHandler(orderService, trackingService)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 
 	r := gin.Default()

@@ -30,7 +30,7 @@ func (h *TrackingHandler) TrackEvent(c *gin.Context) {
 	if payload.UserData == nil {
 		payload.UserData = make(map[string]interface{})
 	}
-	payload.UserData["client_ip_address"] = c.ClientIP()
+	payload.UserData["client_ip_address"] = getClientIP(c)
 
 	// Run tracking asynchronously so it doesn't block the user's request
 	go func() {

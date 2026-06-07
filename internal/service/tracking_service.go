@@ -3,10 +3,14 @@ package service
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/glow-and-beauty-goals/backend/internal/model"
@@ -31,15 +35,77 @@ func NewTrackingService(configRepo repository.ConfigRepository) TrackingService 
 
 // Payload coming from the Next.js frontend
 type TrackingPayload struct {
-	EventName  string                 `json:"event_name"`
-	EventID    string                 `json:"event_id"`
-	EventTime  int64                  `json:"event_time"`
-	EventURL   string                 `json:"event_url"`
-	UserData   map[string]interface{} `json:"user_data"`
-	CustomData map[string]interface{} `json:"custom_data"`
+	EventName     string                 `json:"event_name"`
+	EventID       string                 `json:"event_id"`
+	EventTime     int64                  `json:"event_time"`
+	EventURL      string                 `json:"event_url"`
+	EventReferrer string                 `json:"event_referrer"`
+	UserData      map[string]interface{} `json:"user_data"`
+	CustomData    map[string]interface{} `json:"custom_data"`
+}
+
+var sha256Regex = regexp.MustCompile(`^[a-f0-9]{64}$`)
+
+func hashSHA256(value string) string {
+	value = strings.ToLower(strings.TrimSpace(value))
+	if value == "" || sha256Regex.MatchString(value) {
+		return value
+	}
+
+	sum := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(sum[:])
+}
+
+func hashPhone(value string) string {
+	digits := regexp.MustCompile(`\D+`).ReplaceAllString(value, "")
+	return hashSHA256(digits)
+}
+
+func stringValue(data map[string]interface{}, key string) string {
+	if data == nil {
+		return ""
+	}
+
+	if value, ok := data[key].(string); ok {
+		return strings.TrimSpace(value)
+	}
+
+	return ""
+}
+
+func normalizeUserData(userData map[string]interface{}) map[string]interface{} {
+	normalized := make(map[string]interface{})
+	for key, value := range userData {
+		if value == nil {
+			continue
+		}
+
+		if text, ok := value.(string); ok {
+			if strings.TrimSpace(text) != "" {
+				normalized[key] = text
+			}
+			continue
+		}
+
+		normalized[key] = value
+	}
+
+	if value := stringValue(normalized, "em"); value != "" {
+		normalized["em"] = hashSHA256(value)
+	}
+	if value := stringValue(normalized, "ph"); value != "" {
+		normalized["ph"] = hashPhone(value)
+	}
+	if value := stringValue(normalized, "fn"); value != "" {
+		normalized["fn"] = hashSHA256(value)
+	}
+
+	return normalized
 }
 
 func (s *trackingService) TrackEvent(ctx context.Context, payload TrackingPayload) error {
+	payload.UserData = normalizeUserData(payload.UserData)
+
 	// Get tracking config
 	config, err := s.configRepo.GetSiteConfig(ctx, "tracking_pixels")
 	if err != nil {
@@ -136,6 +202,9 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 			"url": payload.EventURL,
 		},
 	}
+	if payload.EventReferrer != "" {
+		contextData["page"].(map[string]interface{})["referrer"] = payload.EventReferrer
+	}
 
 	tikTokUser := make(map[string]interface{})
 	if ip, ok := payload.UserData["client_ip_address"]; ok {
@@ -144,8 +213,16 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	if ua, ok := payload.UserData["client_user_agent"]; ok {
 		contextData["user_agent"] = ua
 	}
+	if callback, ok := payload.UserData["ttclid"]; ok {
+		contextData["ad"] = map[string]interface{}{
+			"callback": callback,
+		}
+	}
 	if ttp, ok := payload.UserData["ttp"]; ok {
 		tikTokUser["ttp"] = ttp
+	}
+	if ttclid, ok := payload.UserData["ttclid"]; ok {
+		tikTokUser["ttclid"] = ttclid
 	}
 	if em, ok := payload.UserData["em"]; ok {
 		tikTokUser["email"] = em
