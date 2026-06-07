@@ -258,10 +258,24 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("TikTok API failed with status %d: %s", resp.StatusCode, string(body))
+	body, _ := io.ReadAll(resp.Body)
+
+	// TikTok ALWAYS returns HTTP 200 even on errors.
+	// The real result is inside the JSON body: { "code": 0, "message": "OK" }
+	var tikTokResp struct {
+		Code    int    `json:"code"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(body, &tikTokResp); err != nil {
+		fmt.Printf("[TikTok] Failed to parse response: %s\n", string(body))
+		return fmt.Errorf("tiktok: failed to parse response: %w", err)
 	}
 
+	if tikTokResp.Code != 0 {
+		fmt.Printf("[TikTok] API Error code=%d message=%s\n", tikTokResp.Code, tikTokResp.Message)
+		return fmt.Errorf("tiktok API error %d: %s", tikTokResp.Code, tikTokResp.Message)
+	}
+
+	fmt.Printf("[TikTok] Event sent OK: %s (test_code=%s)\n", eventName, cfg.TestEventCode)
 	return nil
 }
