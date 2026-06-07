@@ -1,0 +1,10 @@
+# Environment variables
+.env
+.env.*
+
+# Binaries
+/api-server
+
+# Go workspace file
+go.work
+go.work.sum
