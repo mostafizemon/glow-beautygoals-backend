@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -98,7 +99,7 @@ func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelCon
 	}
 
 	urlWithToken := fmt.Sprintf("%s?access_token=%s", url, cfg.AccessToken)
-	
+
 	bodyBytes, _ := json.Marshal(requestBody)
 	req, _ := http.NewRequestWithContext(ctx, "POST", urlWithToken, bytes.NewBuffer(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
@@ -110,7 +111,8 @@ func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelCon
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("Meta CAPI failed with status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("Meta CAPI failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	return nil
@@ -123,13 +125,24 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 
 	url := "https://business-api.tiktok.com/open_api/v1.3/pixel/track/"
 
-	// Map Meta/General UserData to TikTok specific Context User
+	eventName := payload.EventName
+	if eventName == "Purchase" {
+		eventName = "CompletePayment"
+	}
+
+	// TikTok expects ip and user_agent in context, while hashed identifiers live in context.user.
+	contextData := map[string]interface{}{
+		"page": map[string]interface{}{
+			"url": payload.EventURL,
+		},
+	}
+
 	tikTokUser := make(map[string]interface{})
 	if ip, ok := payload.UserData["client_ip_address"]; ok {
-		tikTokUser["ip"] = ip
+		contextData["ip"] = ip
 	}
 	if ua, ok := payload.UserData["client_user_agent"]; ok {
-		tikTokUser["user_agent"] = ua
+		contextData["user_agent"] = ua
 	}
 	if ttp, ok := payload.UserData["ttp"]; ok {
 		tikTokUser["ttp"] = ttp
@@ -140,24 +153,17 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	if ph, ok := payload.UserData["ph"]; ok {
 		tikTokUser["phone_number"] = ph
 	}
-
-	// TikTok has strict event mapping
-	eventData := map[string]interface{}{
-		"event": payload.EventName,
-		"event_id": payload.EventID,
-		"timestamp": payload.EventTime,
-		"context": map[string]interface{}{
-			"page": map[string]interface{}{
-				"url": payload.EventURL,
-			},
-			"user": tikTokUser,
-		},
-		"properties": payload.CustomData,
+	if len(tikTokUser) > 0 {
+		contextData["user"] = tikTokUser
 	}
 
 	requestBody := map[string]interface{}{
 		"pixel_code": cfg.PixelID,
-		"data": []interface{}{eventData},
+		"event": eventName,
+		"event_id": payload.EventID,
+		"timestamp": time.Unix(payload.EventTime, 0).UTC().Format(time.RFC3339),
+		"context": contextData,
+		"properties": payload.CustomData,
 	}
 
 	if cfg.TestEventCode != "" {
@@ -176,7 +182,8 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("TikTok API failed with status %d", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("TikTok API failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
 	return nil

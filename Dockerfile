@@ -13,16 +13,20 @@ RUN go mod download
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
 
-# Build the Go app
+# Build the main API server
 RUN CGO_ENABLED=0 GOOS=linux go build -o /api-server ./cmd/api
+
+# Build the seed tool
+RUN CGO_ENABLED=0 GOOS=linux go build -o /seed-tool ./seed.go
 
 # Run stage
 FROM alpine:latest
 
 WORKDIR /
 
-# Copy the Pre-built binary file from the previous stage
+# Copy the Pre-built binary files from the previous stage
 COPY --from=builder /api-server /api-server
+COPY --from=builder /seed-tool /seed-tool
 
 # Accept PORT argument and expose it
 ARG PORT=8085
