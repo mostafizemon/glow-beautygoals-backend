@@ -186,6 +186,8 @@ func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelCon
 
 func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelConfig, payload TrackingPayload) error {
 	if !cfg.IsActive || cfg.PixelID == "" || cfg.AccessToken == "" {
+		fmt.Printf("[TikTok] SKIPPED event=%s reason: IsActive=%v PixelID=%q HasAccessToken=%v\n",
+			payload.EventName, cfg.IsActive, cfg.PixelID, cfg.AccessToken != "")
 		return nil
 	}
 
