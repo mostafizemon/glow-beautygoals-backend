@@ -70,8 +70,8 @@ func (s *authService) CreateInitialAdmin(ctx context.Context, email, password st
 	}
 
 	if count > 0 {
-		// Admin already exists, force update the password hash
-		_, err := s.collection.UpdateOne(ctx, bson.M{"email": email}, bson.M{"$set": bson.M{"password_hash": string(hashed)}})
+		// Admin already exists, force update the password hash AND role
+		_, err := s.collection.UpdateOne(ctx, bson.M{"email": email}, bson.M{"$set": bson.M{"password_hash": string(hashed), "role": "admin"}})
 		return err
 	}
 
