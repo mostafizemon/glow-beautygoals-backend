@@ -25,22 +25,22 @@ func LoadConfig() *Config {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8085"
+		log.Fatal("PORT environment variable is missing")
 	}
 
 	mongoURI := os.Getenv("MONGODB_URI")
 	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017"
+		log.Fatal("MONGODB_URI environment variable is missing")
 	}
 
 	dbName := os.Getenv("DB_NAME")
 	if dbName == "" {
-		dbName = "beauty_db"
+		log.Fatal("DB_NAME environment variable is missing")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "super_secret_key_for_admin"
+		log.Fatal("JWT_SECRET environment variable is missing")
 	}
 
 	cloudinaryURL := os.Getenv("CLOUDINARY_URL")

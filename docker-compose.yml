@@ -10,7 +10,7 @@ services:
       - .env
     environment:
       - PORT=${PORT:-8085}
-      - JWT_SECRET=super_secret_key_for_admin
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - app-network
 
