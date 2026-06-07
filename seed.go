@@ -19,7 +19,7 @@ func main() {
 
 	authService := service.NewAuthService(db, cfg.JWTSecret)
 	
-	email := "mostaafizemon09@gmail.com"
+	email := "mostafizemon09@gmail.com"
 	password := "Emon@548"
 	
 	err = authService.CreateInitialAdmin(context.Background(), email, password)
