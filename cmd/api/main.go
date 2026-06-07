@@ -74,6 +74,7 @@ func main() {
 		v1.GET("/products/:id", productHandler.GetProduct)
 		v1.GET("/products/slug/:slug", productHandler.GetProductBySlug)
 		v1.GET("/config/pixels", configHandler.GetPublicPixels)
+		v1.GET("/config/contact", configHandler.GetContactConfig) // Public - for floating buttons
 		v1.POST("/events/track", trackingHandler.TrackEvent)
 		v1.POST("/orders", orderHandler.CreateOrder) // Publicly accessible to place orders
 		v1.GET("/categories", categoryHandler.GetAllCategories) // Public - for product forms
@@ -95,11 +96,13 @@ func main() {
 				superAdmin.POST("/products/upload", productHandler.UploadImage)
 
 				superAdmin.POST("/categories", categoryHandler.CreateCategory)
+				superAdmin.PUT("/categories/reorder", categoryHandler.ReorderCategories)
 				superAdmin.PUT("/categories/:id", categoryHandler.UpdateCategory)
 				superAdmin.DELETE("/categories/:id", categoryHandler.DeleteCategory)
 
 				superAdmin.GET("/config/tracking", configHandler.GetTrackingConfig)
 				superAdmin.POST("/config/tracking", configHandler.UpdateTrackingConfig)
+				superAdmin.POST("/config/contact", configHandler.UpdateContactConfig)
 
 				superAdmin.GET("/users", userHandler.GetAllUsers)
 				superAdmin.POST("/users", userHandler.CreateUser)

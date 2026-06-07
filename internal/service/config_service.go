@@ -10,6 +10,8 @@ import (
 type ConfigService interface {
 	GetTrackingConfig(ctx context.Context) (*model.SiteConfig, error)
 	UpdateTrackingConfig(ctx context.Context, config *model.SiteConfig) error
+	GetContactConfig(ctx context.Context) (*model.ContactConfig, error)
+	UpdateContactConfig(ctx context.Context, config *model.ContactConfig) error
 }
 
 type configService struct {
@@ -29,4 +31,12 @@ func (s *configService) GetTrackingConfig(ctx context.Context) (*model.SiteConfi
 func (s *configService) UpdateTrackingConfig(ctx context.Context, config *model.SiteConfig) error {
 	config.ConfigKey = "tracking_pixels"
 	return s.repo.UpsertSiteConfig(ctx, config)
+}
+
+func (s *configService) GetContactConfig(ctx context.Context) (*model.ContactConfig, error) {
+	return s.repo.GetContactConfig(ctx)
+}
+
+func (s *configService) UpdateContactConfig(ctx context.Context, config *model.ContactConfig) error {
+	return s.repo.UpsertContactConfig(ctx, config)
 }

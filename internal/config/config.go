@@ -25,7 +25,7 @@ func LoadConfig() *Config {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8085"
 	}
 
 	mongoURI := os.Getenv("MONGODB_URI")

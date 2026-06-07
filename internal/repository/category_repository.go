@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CategoryRepository interface {
@@ -17,6 +18,7 @@ type CategoryRepository interface {
 	Create(ctx context.Context, category *model.Category) error
 	Update(ctx context.Context, id string, category *model.Category) error
 	Delete(ctx context.Context, id string) error
+	Reorder(ctx context.Context, categoryIDs []string) error
 }
 
 type categoryRepository struct {
@@ -30,7 +32,8 @@ func NewCategoryRepository(db *mongo.Database) CategoryRepository {
 }
 
 func (r *categoryRepository) GetAll(ctx context.Context) ([]model.Category, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{})
+	opts := options.Find().SetSort(bson.D{{Key: "sort_order", Value: 1}})
+	cursor, err := r.collection.Find(ctx, bson.M{}, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +80,7 @@ func (r *categoryRepository) Update(ctx context.Context, id string, category *mo
 		"$set": bson.M{
 			"name":       category.Name,
 			"slug":       category.Slug,
+			"sort_order": category.SortOrder,
 			"updated_at": category.UpdatedAt,
 		},
 	}
@@ -90,5 +94,22 @@ func (r *categoryRepository) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objID})
+	return err
+}
+
+func (r *categoryRepository) Reorder(ctx context.Context, categoryIDs []string) error {
+	var models []mongo.WriteModel
+	for i, id := range categoryIDs {
+		objID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			continue // skip invalid ids
+		}
+		update := bson.M{"$set": bson.M{"sort_order": i}}
+		models = append(models, mongo.NewUpdateOneModel().SetFilter(bson.M{"_id": objID}).SetUpdate(update))
+	}
+	if len(models) == 0 {
+		return nil
+	}
+	_, err := r.collection.BulkWrite(ctx, models)
 	return err
 }

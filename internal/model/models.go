@@ -10,6 +10,7 @@ type Category struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name      string             `bson:"name" json:"name"`
 	Slug      string             `bson:"slug" json:"slug"`
+	SortOrder int                `bson:"sort_order" json:"sort_order"`
 	CreatedAt time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
 }
@@ -34,7 +35,7 @@ type Product struct {
 	Slug           string             `bson:"slug" json:"slug"`
 	Name           string             `bson:"name" json:"name"`
 	Description    string             `bson:"description" json:"description"`
-	Category       string             `bson:"category" json:"category"`
+	Categories     []string           `bson:"categories" json:"categories"`
 	Price          float64            `bson:"price" json:"price"`
 	OfferPrice     float64            `bson:"offer_price" json:"offer_price"`
 	Stock          int                `bson:"stock" json:"stock"`
@@ -93,4 +94,13 @@ type SiteConfig struct {
 	Meta      PixelConfig        `bson:"meta" json:"meta"`
 	TikTok    PixelConfig        `bson:"tiktok" json:"tiktok"`
 	UpdatedAt time.Time          `bson:"updated_at" json:"updated_at"`
+}
+
+type ContactConfig struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty" json:"id"`
+	ConfigKey   string             `bson:"config_key" json:"config_key"` // 'contact_info'
+	WhatsApp    string             `bson:"whatsapp" json:"whatsapp"`
+	Phone       string             `bson:"phone" json:"phone"`
+	IsActive    bool               `bson:"is_active" json:"is_active"`
+	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
 }

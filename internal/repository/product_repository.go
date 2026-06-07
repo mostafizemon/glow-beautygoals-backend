@@ -99,16 +99,19 @@ func (r *productRepository) Update(ctx context.Context, id string, product *mode
 
 	update := bson.M{
 		"$set": bson.M{
-			"name":        product.Name,
-			"slug":        product.Slug,
-			"description": product.Description,
-			"price":       product.Price,
-			"stock":       product.Stock,
-			"category":    product.Category,
-			"is_featured": product.IsFeatured,
-			"is_active":   product.IsActive,
-			"images":      product.Images,
-			"updated_at":  product.UpdatedAt,
+			"name":             product.Name,
+			"slug":             product.Slug,
+			"description":      product.Description,
+			"price":            product.Price,
+			"offer_price":      product.OfferPrice,
+			"stock":            product.Stock,
+			"categories":       product.Categories,
+			"is_featured":      product.IsFeatured,
+			"is_active":        product.IsActive,
+			"is_free_delivery": product.IsFreeDelivery,
+			"images":           product.Images,
+			"seo":              product.SEO,
+			"updated_at":       product.UpdatedAt,
 		},
 	}
 

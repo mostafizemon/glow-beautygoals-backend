@@ -5,11 +5,11 @@ services:
     build: .
     container_name: glow-beauty-api
     ports:
-      - "8080:8080"
+      - "${PORT:-8085}:${PORT:-8085}"
     env_file:
       - .env
     environment:
-      - PORT=8080
+      - PORT=${PORT:-8085}
       - JWT_SECRET=super_secret_key_for_admin
     networks:
       - app-network

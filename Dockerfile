@@ -24,8 +24,9 @@ WORKDIR /
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /api-server /api-server
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
+# Accept PORT argument and expose it
+ARG PORT=8085
+EXPOSE ${PORT}
 
 # Command to run the executable
 CMD ["/api-server"]

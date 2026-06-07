@@ -28,7 +28,7 @@ func (h *ProductHandler) GetAllProducts(c *gin.Context) {
 		filter["is_featured"] = true
 	}
 	if category := c.Query("category"); category != "" {
-		filter["category"] = category
+		filter["categories"] = category
 	}
 
 	products, err := h.service.GetAllProducts(c.Request.Context(), filter)

@@ -66,3 +66,27 @@ func (h *ConfigHandler) GetPublicPixels(c *gin.Context) {
 
 	c.JSON(http.StatusOK, safeConfig)
 }
+
+// GetContactConfig returns the contact numbers (public endpoint)
+func (h *ConfigHandler) GetContactConfig(c *gin.Context) {
+	config, err := h.service.GetContactConfig(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, config)
+}
+
+// UpdateContactConfig saves admin-entered WhatsApp and Phone numbers
+func (h *ConfigHandler) UpdateContactConfig(c *gin.Context) {
+	var config model.ContactConfig
+	if err := c.ShouldBindJSON(&config); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.UpdateContactConfig(c.Request.Context(), &config); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, config)
+}

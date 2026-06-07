@@ -60,3 +60,18 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "category deleted"})
 }
+
+func (h *CategoryHandler) ReorderCategories(c *gin.Context) {
+	var req struct {
+		OrderedIds []string `json:"orderedIds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.service.ReorderCategories(c.Request.Context(), req.OrderedIds); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "categories reordered"})
+}
