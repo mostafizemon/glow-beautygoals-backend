@@ -196,34 +196,26 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 		return nil
 	}
 
-	url := "https://business-api.tiktok.com/open_api/v1.3/pixel/track/"
+	url := "https://business-api.tiktok.com/open_api/v1.3/event/track/"
 
 	eventName := payload.EventName
 	if eventName == "Purchase" {
 		eventName = "CompletePayment"
 	}
 
-	// TikTok expects ip and user_agent in context, while hashed identifiers live in context.user.
-	contextData := map[string]interface{}{
-		"page": map[string]interface{}{
-			"url": payload.EventURL,
-		},
+	pageData := map[string]interface{}{
+		"url": payload.EventURL,
 	}
 	if payload.EventReferrer != "" {
-		contextData["page"].(map[string]interface{})["referrer"] = payload.EventReferrer
+		pageData["referrer"] = payload.EventReferrer
 	}
 
 	tikTokUser := make(map[string]interface{})
 	if ip, ok := payload.UserData["client_ip_address"]; ok {
-		contextData["ip"] = ip
+		tikTokUser["ip"] = ip
 	}
 	if ua, ok := payload.UserData["client_user_agent"]; ok {
-		contextData["user_agent"] = ua
-	}
-	if callback, ok := payload.UserData["ttclid"]; ok {
-		contextData["ad"] = map[string]interface{}{
-			"callback": callback,
-		}
+		tikTokUser["user_agent"] = ua
 	}
 	if ttp, ok := payload.UserData["ttp"]; ok {
 		tikTokUser["ttp"] = ttp
@@ -243,17 +235,29 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	if ln, ok := payload.UserData["ln"]; ok {
 		tikTokUser["last_name"] = ln
 	}
+
+	eventObj := map[string]interface{}{
+		"event": eventName,
+		"event_id": payload.EventID,
+		"event_time": payload.EventTime,
+		"page": pageData,
+		"properties": payload.CustomData,
+	}
+
 	if len(tikTokUser) > 0 {
-		contextData["user"] = tikTokUser
+		eventObj["user"] = tikTokUser
+	}
+
+	if callback, ok := payload.UserData["ttclid"]; ok {
+		eventObj["ad"] = map[string]interface{}{
+			"callback": callback,
+		}
 	}
 
 	requestBody := map[string]interface{}{
-		"pixel_code": cfg.PixelID,
-		"event": eventName,
-		"event_id": payload.EventID,
-		"timestamp": time.Unix(payload.EventTime, 0).UTC().Format(time.RFC3339),
-		"context": contextData,
-		"properties": payload.CustomData,
+		"event_source": "web",
+		"event_source_id": cfg.PixelID,
+		"data": []interface{}{eventObj},
 	}
 
 	if cfg.TestEventCode != "" {
