@@ -15,6 +15,7 @@ type OrderService interface {
 	GetAllOrders(ctx context.Context) ([]model.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
 	UpdateOrderStatus(ctx context.Context, id string, status string) error
+	DeleteOrder(ctx context.Context, id string) error
 }
 
 type orderService struct {
@@ -70,4 +71,8 @@ func (s *orderService) UpdateOrderStatus(ctx context.Context, id string, status 
 	}
 
 	return s.repo.UpdateStatus(ctx, id, status)
+}
+
+func (s *orderService) DeleteOrder(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
 }

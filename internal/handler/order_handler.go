@@ -152,3 +152,18 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "order status updated successfully"})
 }
+
+func (h *OrderHandler) DeleteOrder(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order ID is required"})
+		return
+	}
+
+	if err := h.service.DeleteOrder(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "order deleted successfully"})
+}

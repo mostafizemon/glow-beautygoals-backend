@@ -16,6 +16,7 @@ type OrderRepository interface {
 	GetAll(ctx context.Context, filter bson.M) ([]model.Order, error)
 	GetByID(ctx context.Context, id string) (*model.Order, error)
 	UpdateStatus(ctx context.Context, id string, status string) error
+	Delete(ctx context.Context, id string) error
 }
 
 type orderRepository struct {
@@ -87,5 +88,15 @@ func (r *orderRepository) UpdateStatus(ctx context.Context, id string, status st
 	}
 
 	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	return err
+}
+
+func (r *orderRepository) Delete(ctx context.Context, id string) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.collection.DeleteOne(ctx, bson.M{"_id": objID})
 	return err
 }
