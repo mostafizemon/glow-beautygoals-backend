@@ -99,6 +99,9 @@ func normalizeUserData(userData map[string]interface{}) map[string]interface{} {
 	if value := stringValue(normalized, "fn"); value != "" {
 		normalized["fn"] = hashSHA256(value)
 	}
+	if value := stringValue(normalized, "ln"); value != "" {
+		normalized["ln"] = hashSHA256(value)
+	}
 
 	return normalized
 }
@@ -121,15 +124,18 @@ func (s *trackingService) TrackEvent(ctx context.Context, payload TrackingPayloa
 		errChan <- s.sendToTikTokAPI(ctx, config.TikTok, payload)
 	}()
 
-	var finalErr error
+	var errs []string
 	for i := 0; i < 2; i++ {
 		if err := <-errChan; err != nil {
 			fmt.Printf("Tracking Error: %v\n", err)
-			finalErr = err
+			errs = append(errs, err.Error())
 		}
 	}
 
-	return finalErr // Returning the last error if any, but tracking should usually not block the user flow
+	if len(errs) > 0 {
+		return fmt.Errorf("tracking errors: %s", strings.Join(errs, "; "))
+	}
+	return nil
 }
 
 func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelConfig, payload TrackingPayload) error {
@@ -149,13 +155,6 @@ func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelCon
 		"custom_data": payload.CustomData,
 	}
 
-	// Make sure client_ip_address is passed if available
-	// Meta requires client_ip_address for high match quality
-	if ip, ok := payload.UserData["client_ip_address"]; !ok || ip == "" {
-		// Just in case it wasn't passed, though it should be populated by the handler
-		// We'll leave it as is, but ensure the struct accepts it
-	}
-
 	requestBody := map[string]interface{}{
 		"data": []interface{}{eventData},
 	}
@@ -164,11 +163,17 @@ func (s *trackingService) sendToMetaCAPI(ctx context.Context, cfg model.PixelCon
 		requestBody["test_event_code"] = cfg.TestEventCode
 	}
 
-	urlWithToken := fmt.Sprintf("%s?access_token=%s", url, cfg.AccessToken)
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal Meta request: %w", err)
+	}
 
-	bodyBytes, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequestWithContext(ctx, "POST", urlWithToken, bytes.NewBuffer(bodyBytes))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create Meta request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(cfg.AccessToken))
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -232,6 +237,12 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 	if ph, ok := payload.UserData["ph"]; ok {
 		tikTokUser["phone_number"] = ph
 	}
+	if fn, ok := payload.UserData["fn"]; ok {
+		tikTokUser["first_name"] = fn
+	}
+	if ln, ok := payload.UserData["ln"]; ok {
+		tikTokUser["last_name"] = ln
+	}
 	if len(tikTokUser) > 0 {
 		contextData["user"] = tikTokUser
 	}
@@ -249,10 +260,17 @@ func (s *trackingService) sendToTikTokAPI(ctx context.Context, cfg model.PixelCo
 		requestBody["test_event_code"] = cfg.TestEventCode
 	}
 
-	bodyBytes, _ := json.Marshal(requestBody)
-	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(bodyBytes))
+	bodyBytes, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("failed to marshal TikTok request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("failed to create TikTok request: %w", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Access-Token", cfg.AccessToken)
+	req.Header.Set("Access-Token", strings.TrimSpace(cfg.AccessToken))
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
