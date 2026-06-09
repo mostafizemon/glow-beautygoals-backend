@@ -16,6 +16,7 @@ type OrderRepository interface {
 	GetAll(ctx context.Context, filter bson.M) ([]model.Order, error)
 	GetByID(ctx context.Context, id string) (*model.Order, error)
 	UpdateStatus(ctx context.Context, id string, status string) error
+	UpdateDetails(ctx context.Context, id string, customer model.Customer, totalAmount float64) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -84,6 +85,24 @@ func (r *orderRepository) UpdateStatus(ctx context.Context, id string, status st
 		"$set": bson.M{
 			"status":     status,
 			"updated_at": time.Now(),
+		},
+	}
+
+	_, err = r.collection.UpdateOne(ctx, bson.M{"_id": objID}, update)
+	return err
+}
+
+func (r *orderRepository) UpdateDetails(ctx context.Context, id string, customer model.Customer, totalAmount float64) error {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"customer":     customer,
+			"total_amount": totalAmount,
+			"updated_at":   time.Now(),
 		},
 	}
 

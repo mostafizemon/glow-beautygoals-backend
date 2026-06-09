@@ -109,6 +109,7 @@ func main() {
 				
 				superAdmin.GET("/orders", orderHandler.GetAllOrders)
 				superAdmin.GET("/orders/:id", orderHandler.GetOrder)
+				superAdmin.PUT("/orders/:id", orderHandler.UpdateOrderDetails)
 				superAdmin.PUT("/orders/:id/status", orderHandler.UpdateOrderStatus)
 				superAdmin.DELETE("/orders/:id", orderHandler.DeleteOrder)
 			}

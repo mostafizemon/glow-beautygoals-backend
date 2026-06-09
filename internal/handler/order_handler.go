@@ -153,6 +153,31 @@ func (h *OrderHandler) UpdateOrderStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "order status updated successfully"})
 }
 
+func (h *OrderHandler) UpdateOrderDetails(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order ID is required"})
+		return
+	}
+
+	var req struct {
+		Customer    model.Customer `json:"customer"`
+		TotalAmount float64        `json:"total_amount"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.service.UpdateOrderDetails(c.Request.Context(), id, req.Customer, req.TotalAmount); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "order details updated successfully"})
+}
+
 func (h *OrderHandler) DeleteOrder(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {

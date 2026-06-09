@@ -15,6 +15,7 @@ type OrderService interface {
 	GetAllOrders(ctx context.Context) ([]model.Order, error)
 	GetOrderByID(ctx context.Context, id string) (*model.Order, error)
 	UpdateOrderStatus(ctx context.Context, id string, status string) error
+	UpdateOrderDetails(ctx context.Context, id string, customer model.Customer, totalAmount float64) error
 	DeleteOrder(ctx context.Context, id string) error
 }
 
@@ -71,6 +72,17 @@ func (s *orderService) UpdateOrderStatus(ctx context.Context, id string, status 
 	}
 
 	return s.repo.UpdateStatus(ctx, id, status)
+}
+
+func (s *orderService) UpdateOrderDetails(ctx context.Context, id string, customer model.Customer, totalAmount float64) error {
+	// Simple validation
+	if customer.Name == "" || customer.Phone == "" || customer.Address == "" {
+		return fmt.Errorf("customer name, phone, and address are required")
+	}
+	if totalAmount < 0 {
+		return fmt.Errorf("total amount cannot be negative")
+	}
+	return s.repo.UpdateDetails(ctx, id, customer, totalAmount)
 }
 
 func (s *orderService) DeleteOrder(ctx context.Context, id string) error {
